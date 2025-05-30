@@ -1,0 +1,178 @@
+"use client"
+
+import type React from "react"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
+import { Plus, Loader2 } from "lucide-react"
+
+interface CreateProjectDialogProps {
+  onProjectCreated?: () => void
+  trigger?: React.ReactNode
+}
+
+export function CreateProjectDialog({ onProjectCreated, trigger }: CreateProjectDialogProps) {
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [name, setName] = useState("")
+  const [description, setDescription] = useState("")
+  const { toast } = useToast()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    console.log("Form submitted with:", { name, description }) // Debug log
+
+    if (!name.trim()) {
+      toast({
+        title: "ข้อผิดพลาด",
+        description: "กรุณาใส่ชื่อโปรเจกต์",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setLoading(true)
+      console.log("Sending request to API...") // Debug log
+
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          description: description.trim() || null,
+        }),
+      })
+
+      console.log("API Response status:", response.status) // Debug log
+
+      const result = await response.json()
+      console.log("API Response data:", result) // Debug log
+
+      if (result.success) {
+        toast({
+          title: "สำเร็จ!",
+          description: `โปรเจกต์ "${name}" ถูกสร้างเรียบร้อยแล้ว`,
+        })
+
+        // Reset form
+        setName("")
+        setDescription("")
+        setOpen(false)
+
+        // Notify parent component
+        if (onProjectCreated) {
+          onProjectCreated()
+        }
+      } else {
+        throw new Error(result.error || "ไม่สามารถสร้างโปรเจกต์ได้")
+      }
+    } catch (error) {
+      console.error("Error creating project:", error)
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: error instanceof Error ? error.message : "ไม่สามารถสร้างโปรเจกต์ได้",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleOpenChange = (newOpen: boolean) => {
+    console.log("Dialog open state changed:", newOpen) // Debug log
+    setOpen(newOpen)
+    if (!newOpen) {
+      // Reset form when dialog closes
+      setName("")
+      setDescription("")
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              console.log("Create project button clicked") // Debug log
+              setOpen(true)
+            }}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            สร้างโปรเจกต์ใหม่
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>สร้างโปรเจกต์ใหม่</DialogTitle>
+          <DialogDescription>เพิ่มโปรเจกต์ใหม่เพื่อจัดการไฟล์ CSV และข้อมูลของคุณ</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="project-name">ชื่อโปรเจกต์ *</Label>
+              <Input
+                id="project-name"
+                placeholder="เช่น โปรเจกต์การตลาดดิจิทัล"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={loading}
+                required
+                autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="project-description">คำอธิบาย</Label>
+              <Textarea
+                id="project-description"
+                placeholder="อธิบายโปรเจกต์ของคุณ (ไม่บังคับ)"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={loading}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+              ยกเลิก
+            </Button>
+            <Button type="submit" disabled={loading || !name.trim()}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  กำลังสร้าง...
+                </>
+              ) : (
+                <>
+                  <Plus className="mr-2 h-4 w-4" />
+                  สร้างโปรเจกต์
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
