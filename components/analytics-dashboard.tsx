@@ -54,9 +54,9 @@ export function AnalyticsDashboard() {
     setFiltersChanged((prev) => prev + 1)
   }
 
-  useEffect(() => {
-    handleFilterChange()
-  }, [date, selectedTester, selectedPlatform, selectedIssue])
+  // useEffect(() => {
+  //   handleFilterChange()
+  // }, [date, selectedTester, selectedPlatform, selectedIssue])
 
   return (
     <div id="dashboard-content" className="space-y-6 sm:space-y-8">
@@ -238,7 +238,7 @@ export function AnalyticsDashboard() {
         </CardContent>
       </Card>
 
-      {/* VoiceBot Performance Metrics - Updated Section Title */}
+      VoiceBot Performance Metrics - Updated Section Title
       <div className="space-y-3 sm:space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight">ตัวชี้วัดประสิทธิภาพ VoiceBot</h2>
@@ -250,28 +250,28 @@ export function AnalyticsDashboard() {
       </div>
 
       {/* Test Summary */}
-      <TestSummary filters={filters} key={filtersChanged} />
+      {/* <TestSummary filters={filters} key={filtersChanged} /> */}
 
       {/* Response Time Chart */}
-      <ResponseTimeChart filters={filters} key={filtersChanged} />
+      {/* <ResponseTimeChart filters={filters} key={filtersChanged} /> */}
 
       {/* Testing Platforms */}
-      <TestingPlatforms filters={filters} key={filtersChanged} />
+      {/* <TestingPlatforms filters={filters} key={filtersChanged} /> */}
 
       {/* ASR Details */}
-      <AsrDetails filters={filters} key={filtersChanged} />
+      {/* <AsrDetails filters={filters} key={filtersChanged} /> */}
 
       {/* AI Summary Per Session */}
-      <AiSummaryPerSession filters={filters} key={filtersChanged} />
+      {/* <AiSummaryPerSession filters={filters} key={filtersChanged} /> */}
 
       {/* Detected Issues */}
-      <DetectedIssues filters={filters} key={filtersChanged} />
+      {/* <DetectedIssues filters={filters} key={filtersChanged} /> */}
 
       {/* Test Case Chart */}
-      <TestCaseChart filters={filters} key={filtersChanged} />
+      {/* <TestCaseChart filters={filters} key={filtersChanged} /> */}
 
       {/* Frequently Asked Questions */}
-      <FrequentlyAskedQuestions filters={filters} key={filtersChanged} />
+      {/* <FrequentlyAskedQuestions filters={filters} key={filtersChanged} /> */}
     </div>
   )
 }

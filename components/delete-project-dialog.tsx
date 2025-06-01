@@ -177,8 +177,10 @@ export function DeleteProjectDialog({
 
                 <div className="space-y-2">
                   <Label htmlFor="confirmation-input">พิมพ์ชื่อโปรเจกต์เพื่อยืนยัน:</Label>
+                 
                   <Input
                     id="confirmation-input"
+                    // type="input"
                     value={confirmationText}
                     onChange={(e) => setConfirmationText(e.target.value)}
                     placeholder="พิมพ์ชื่อโปรเจกต์ที่นี่"

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileUp, Loader2, Send, AlertCircle, CheckCircle2, Plus } from "lucide-react"
+import { FileUp, Loader2, Send, AlertCircle, CheckCircle2, Plus , Upload} from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CreateProjectDialog } from "./create-project-dialog"
 import { CreateAgentDialog } from "./create-agent-dialog"
@@ -18,10 +18,12 @@ import { WebhookResultDashboard } from "./webhook-result-dashboard"
 import { WebhookResultDashboardChatbot } from "./webhook-result-dashboard_Chatbot"
 import { parseWebhookResponse } from "@/lib/webhook-response-parser"
 import { set } from "date-fns"
+import { DatabaseService } from "@/lib/database"
 
 interface Project {
   id: string
   name: string
+  id_agent : string
 }
 
 interface Agent {
@@ -38,6 +40,7 @@ export function WebhookForm() {
   const [chatbotResult, setChatbotResult] = useState(false)
   const [voiceResult, setvoiceResult] = useState(false)
   const [webhookUrl, setWebhookUrl] = useState("")
+  const [hidden, setHidden] = useState("hidden")
   const [isLoading, setIsLoading] = useState(false)
   const [lastError, setLastError] = useState<string | null>(null)
   const [lastSuccess, setLastSuccess] = useState<string | null>(null)
@@ -50,7 +53,29 @@ export function WebhookForm() {
   const [projects, setProjects] = useState<Project[]>([])
   const [agents, setAgents] = useState<Agent[]>([])
   const [loadingData, setLoadingData] = useState(true)
+  useEffect(() => {
+    projects.map((project) => {
+      if (projectId === project.id) {
+        setAgentId(project.id_agent)
+        if (project.id_agent == "2219b7e3-e35a-4208-a3a7-c5e46f7834e7") {
+        setChatbotResult(true)
+        setWebhookUrl("https://5e71-184-22-39-189.ngrok-free.app/webhook-test/afadbbfe-b8f5-4cf2-9a28-614d7c039dce")
+        setvoiceResult(false)
+                          
+    }else if (project.id_agent == "d627e8b8-a499-4c85-899a-26316f751e00") {
+        setvoiceResult(true)
+        setWebhookUrl("https://5e71-184-22-39-189.ngrok-free.app/webhook-test/ab1b6138-5ee7-4aac-8522-39b5f1f3456e")
+        setChatbotResult(false)
+    }
+    }
+    setHidden("block")
 
+    
+  })
+   
+  }, [projectId])
+  
+  
   // Fetch projects and agents from database
   const fetchData = async () => {
     try {
@@ -74,6 +99,12 @@ export function WebhookForm() {
     }
   }
 
+  // useEffect(() => {
+  //   projectId.
+  //   setAgents
+  // }, [projectId])
+  
+
   useEffect(() => {
     fetchData()
   }, [])
@@ -96,25 +127,8 @@ export function WebhookForm() {
 //     "processedRecords": 145,
 //     "errorRecords": 5,
 //     "summary": "Majority of cases processed successfully, minor errors detected.",
-//     "recommendations": [
-//       "Improve ASR model for noisy environments.",
-//       "Increase timeout for slow responses."
-//     ]
+    
 //   },
-//   "detectedIssues": [
-//     {
-//       "type": "ASR Error",
-//       "severity": "medium",
-//       "count": 3,
-//       "description": "ASR misinterpreted the time in 3 cases."
-//     },
-//     {
-//       "type": "Timeout",
-//       "severity": "low",
-//       "count": 2,
-//       "description": "Response timeout occurred during off-peak hours."
-//     }
-//   ],
 //   "userTest": [
 //     { "id": 0, "value": 10, "label": "เขียว" },
 //     { "id": 1, "value": 15, "label": "พิม" },
@@ -130,27 +144,23 @@ export function WebhookForm() {
 //   ],
   
 // "feedback": 
-// [
-// {
-// "group": 
-// "กลุ่มปัญหาการรู้จำเสียงพูด (ASR)",
-// "count": 
-// 14
-// },
-// {
-// "group": 
-// "กลุ่มปัญหาเกี่ยวกับการเข้าใจวัน เวลา หรือบอทตอบเรื่องเวลา/วัน",
-// "count": 
-// 9
-// },
-// {
-// "group": 
-// "กลุ่มปัญหาอื่นๆ",
-// "count": 
-// 8
-// }
-// ]
-  
+//   [
+//     {
+//     "group": 
+//     "กลุ่มปัญหาการรู้จำเสียงพูด (ASR)",
+//     "count": 14
+//     },
+//     {
+//     "group": 
+//     "กลุ่มปัญหาเกี่ยวกับการเข้าใจวัน เวลา หรือบอทตอบเรื่องเวลา/วัน",
+//     "count": 9
+//     },
+//     {
+//     "group": 
+//     "กลุ่มปัญหาอื่นๆ",
+//     "count": 8
+//     }
+//   ]
 // }
 //     // Simulate fetching data from the webhook
 //     setWebhookResponseData(data)
@@ -280,6 +290,8 @@ export function WebhookForm() {
 
       const result = await sendFileToWebhook(formData , webhookUrl)
 
+      await DatabaseService.createVoicebotUXReport(result.data)
+
       console.log("Webhook result:", result.data)
 
       // Parse the webhook response using the actual data from webhook
@@ -357,12 +369,82 @@ export function WebhookForm() {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6 ">
+
+            {/* Project Selection */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="project-name">ชื่อโปรเจกต์</Label>
+                <div className="flex gap-2">
+                  <Select
+                  
+                    onValueChange={(value) => {
+                      setProjectId(value)
+                      
+                      setLastError(null)
+                    }}
+                    required
+                  >
+                    <SelectTrigger id="project-name" className="flex-1">
+                      <SelectValue placeholder="เลือกโปรเจกต์" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {projects.map((project) => (
+                        <SelectItem key={project.id} value={project.id} >
+                          {project.name}
+                  
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <CreateProjectDialog
+                    onProjectCreated={handleProjectCreated}
+                    trigger={
+                      <Button type="button" variant="outline" size="icon">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 col-span-1" >
+                <Label htmlFor="agent-name">ประเภทการทดสอบ</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={agentId}
+                    disabled
+                    onValueChange={(value) => {
+                      setAgentId(value)
+                      setLastError(null)
+                      
+                    }}
+                    required
+                  >
+                    <SelectTrigger id="agent-name" className="flex-1">
+                      <SelectValue placeholder="ประเภทการทดสอบ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {agents.map((agent) => (
+                        <SelectItem key={agent.id} value={agent.id}>
+                          {agent.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                </div>
+              </div>
+            </div>
+            
+
             {/* File Upload Section */}
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className={`space-y-2 ${hidden} col-span-2 `} >
               <Label htmlFor="file-upload">ไฟล์ CSV</Label>
               <div className="grid w-full gap-2">
                 <Input
+                  
                   id="file-upload"
                   type="file"
                   accept=".csv"
@@ -378,12 +460,27 @@ export function WebhookForm() {
                   </Card>
                 )}
               </div>
+              
+            </div>
+             <div className={`space-y-2 ${hidden} col-span-1 transition-all`}>
+                <Label htmlFor="file-name">ชื่อไฟล์</Label>
+                <Input
+                  id="file-name"
+                  placeholder="ใส่ชื่อไฟล์ที่อธิบายได้"
+                  value={fileName}
+                  onChange={(e) => {
+                    setFileName(e.target.value)
+                    setLastError(null)
+                  }}
+                  required
+                />
+              </div>
             </div>
 
             {/* Webhook URL and File Name */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="webhook-url">URL Webhook</Label>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-1">
+              <div className="space-y-2 hidden">
+                <Label htmlFor="webhook-url ">URL Webhook</Label>
                 <Input
                   id="webhook-url"
                   placeholder="https://webhook-url.com/endpoint"
@@ -400,99 +497,10 @@ export function WebhookForm() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="file-name">ชื่อไฟล์</Label>
-                <Input
-                  id="file-name"
-                  placeholder="ใส่ชื่อไฟล์ที่อธิบายได้"
-                  value={fileName}
-                  onChange={(e) => {
-                    setFileName(e.target.value)
-                    setLastError(null)
-                  }}
-                  required
-                />
-              </div>
             </div>
 
             {/* Project and Agent Selection */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="project-name">ชื่อโปรเจกต์</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={projectId}
-                    onValueChange={(value) => {
-                      setProjectId(value)
-                      setLastError(null)
-                    }}
-                    required
-                  >
-                    <SelectTrigger id="project-name" className="flex-1">
-                      <SelectValue placeholder="เลือกโปรเจกต์" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {projects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <CreateProjectDialog
-                    onProjectCreated={handleProjectCreated}
-                    trigger={
-                      <Button type="button" variant="outline" size="icon">
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="agent-name">ชื่อเอเจนต์</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={agentId}
-                    onValueChange={(value) => {
-                      setAgentId(value)
-                      setLastError(null)
-                      if (value == "2219b7e3-e35a-4208-a3a7-c5e46f7834e7") {
-                        setChatbotResult(true)
-                        setWebhookUrl("https://8368-184-22-39-189.ngrok-free.app/webhook-test/afadbbfe-b8f5-4cf2-9a28-614d7c039dce")
-                        setvoiceResult(false)
-                        
-                      }else if (value == "d627e8b8-a499-4c85-899a-26316f751e00") {
-                        setvoiceResult(true)
-                        setWebhookUrl("https://8368-184-22-39-189.ngrok-free.app/webhook-test/ab1b6138-5ee7-4aac-8522-39b5f1f3456e")
-                        setChatbotResult(false)
-                      }
-                    }}
-                    required
-                  >
-                    <SelectTrigger id="agent-name" className="flex-1">
-                      <SelectValue placeholder="เลือกเอเจนต์" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {agents.map((agent) => (
-                        <SelectItem key={agent.id} value={agent.id}>
-                          {agent.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <CreateAgentDialog
-                    onAgentCreated={handleAgentCreated}
-                    trigger={
-                      <Button type="button" variant="outline" size="icon">
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
-                </div>
-              </div>
-            </div>
+            
 
             {/* Submit Button */}
             <div className="flex justify-end pt-4">

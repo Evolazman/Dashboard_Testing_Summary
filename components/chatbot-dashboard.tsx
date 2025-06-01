@@ -249,25 +249,25 @@ export function ChatbotDashboard() {
       </div>
 
       {/* Test Summary */}
-      <TestSummary filters={filters} key={filtersChanged} />
+      {/* <TestSummary filters={filters} key={filtersChanged} /> */}
 
       {/* Response Time Chart */}
-      <ResponseTimeChart filters={filters} key={filtersChanged} />
+      {/* <ResponseTimeChart filters={filters} key={filtersChanged} /> */}
 
       {/* Testing Platforms */}
-      <TestingPlatforms filters={filters} key={filtersChanged} />
+      {/* <TestingPlatforms filters={filters} key={filtersChanged} /> */}
 
       {/* ASR Details */}
-      <AsrDetails filters={filters} key={filtersChanged} />
+      {/* <AsrDetails filters={filters} key={filtersChanged} /> */}
 
       {/* AI Summary Per Session */}
-      <AiSummaryPerSession filters={filters} key={filtersChanged} />
+      {/* <AiSummaryPerSession filters={filters} key={filtersChanged} /> */}
 
       {/* Detected Issues */}
-      <DetectedIssues filters={filters} key={filtersChanged} />
+      {/* <DetectedIssues filters={filters} key={filtersChanged} /> */}
 
       {/* Frequently Asked Questions */}
-      <FrequentlyAskedQuestions filters={filters} key={filtersChanged} />
+      {/* <FrequentlyAskedQuestions filters={filters} key={filtersChanged} /> */}
     </div>
   )
 }

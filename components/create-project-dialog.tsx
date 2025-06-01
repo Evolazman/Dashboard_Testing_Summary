@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState , useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,25 +18,66 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Plus, Loader2 } from "lucide-react"
+import { set } from "date-fns"
 
 interface CreateProjectDialogProps {
   onProjectCreated?: () => void
   trigger?: React.ReactNode
 }
-
+interface Agent {
+  id: string
+  name: string
+}
 export function CreateProjectDialog({ onProjectCreated, trigger }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
+  const [id_agent, setAgent_id] = useState("")
+  const [agents, setAgents] = useState<Agent[]>([])
   const { toast } = useToast()
+const fetchData = async () => {
+      try {
+        
+        const [agentsRes] = await Promise.all([fetch("/api/agents")])
+        const agentsData = await agentsRes.json()
+
+        
+        if (agentsData.success) setAgents(agentsData.data)
+
+    }catch (error) {
+      console.error("Error fetching agents:", error)
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถดึงข้อมูลประเภทการทดสอบได้",
+        variant: "destructive",
+      })
+      return
+    }}
+    
+    useEffect(() => {
+      fetchData()
+    }, [])
+
+    useEffect(() => {
+      console.log("Agents data fetched:", id_agent) // Debug log
+    }, [id_agent])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    console.log("Form submitted with:", { name, description }) // Debug log
-
+    // console.log("Form submitted with:", { name, description }) // Debug log
+    
     if (!name.trim()) {
+      toast({
+        title: "ข้อผิดพลาด",
+        description: "กรุณาใส่ชื่อโปรเจกต์",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!id_agent.trim()) {
       toast({
         title: "ข้อผิดพลาด",
         description: "กรุณาใส่ชื่อโปรเจกต์",
@@ -48,7 +89,7 @@ export function CreateProjectDialog({ onProjectCreated, trigger }: CreateProject
     try {
       setLoading(true)
       console.log("Sending request to API...") // Debug log
-
+      console.log("Project data:", { name, id_agent, description }) // Debug log
       const response = await fetch("/api/projects", {
         method: "POST",
         headers: {
@@ -56,6 +97,7 @@ export function CreateProjectDialog({ onProjectCreated, trigger }: CreateProject
         },
         body: JSON.stringify({
           name: name.trim(),
+          id_agent: id_agent.trim() , // Ensure agent_id is trimmed and can be null
           description: description.trim() || null,
         }),
       })
@@ -73,6 +115,7 @@ export function CreateProjectDialog({ onProjectCreated, trigger }: CreateProject
 
         // Reset form
         setName("")
+        setAgent_id("")
         setDescription("")
         setOpen(false)
 
@@ -101,6 +144,7 @@ export function CreateProjectDialog({ onProjectCreated, trigger }: CreateProject
     if (!newOpen) {
       // Reset form when dialog closes
       setName("")
+      setAgent_id("")
       setDescription("")
     }
   }
@@ -141,6 +185,37 @@ export function CreateProjectDialog({ onProjectCreated, trigger }: CreateProject
                 autoFocus
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="project-agent">ประเภทการทดสอบ *</Label>
+              <Select
+                    value={id_agent}
+                    onValueChange={(value) => {
+                      setAgent_id(value)
+                    }}
+                    required
+                  >
+                    <SelectTrigger id="agent-name" className="flex-1">
+                      <SelectValue placeholder="ประเภทการทดสอบ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {agents.map((agent) => (
+                        <SelectItem key={agent.id} value={agent.id}>
+                          {agent.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+              {/* <Input
+                id="project-name"
+                placeholder="เช่น โปรเจกต์การตลาดดิจิทัล"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={loading}
+                required
+                autoFocus
+              /> */}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="project-description">คำอธิบาย</Label>
               <Textarea
@@ -157,7 +232,7 @@ export function CreateProjectDialog({ onProjectCreated, trigger }: CreateProject
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               ยกเลิก
             </Button>
-            <Button type="submit" disabled={loading || !name.trim()}>
+            <Button type="submit" disabled={loading || !name.trim() || !id_agent.trim()}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

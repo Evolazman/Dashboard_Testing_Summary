@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { FolderOpen, FileText, Eye, Calendar, Settings, AlertCircle } from "lucide-react"
+import { FolderOpen, FileText, Eye, Calendar, Settings, AlertCircle , Upload } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { th } from "date-fns/locale"
 import { CreateProjectDialog } from "./create-project-dialog"
@@ -163,7 +163,7 @@ export function ProjectFolders() {
             </CardTitle>
             <CardDescription>โปรเจกต์ที่มีการอัปเดตล่าสุดพร้อมจำนวนไฟล์</CardDescription>
           </div>
-          <Button variant="ghost" size="sm" className="text-primary">
+          <Button  variant="ghost" size="sm" className="text-primary">
             <Eye className="h-4 w-4 mr-1" />
             ดูทั้งหมด
           </Button>

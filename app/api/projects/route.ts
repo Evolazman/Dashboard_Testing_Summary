@@ -44,6 +44,7 @@ export async function POST(request: Request) {
 
     const projectData = {
       name: body.name.trim(),
+      id_agent: body.id_agent.trim() , // Ensure agent_id is trimmed and can be null
       description: body.description?.trim() || null,
     }
 

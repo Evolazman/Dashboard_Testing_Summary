@@ -7,7 +7,7 @@ export default function WebhookPage() {
   return (
     <div className="flex flex-col space-y-6 sm:space-y-8">
       <div className="space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">จัดการ Webhook และโปรเจกต์</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">สรุปข้อมูลอัตโนมัติไปยังแดชบอร์ด</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
           ส่งไฟล์ CSV ไปยัง n8n webhook และจัดการโปรเจกต์แบบกำหนดเอง
         </p>
@@ -15,22 +15,9 @@ export default function WebhookPage() {
 
       {/* Project Folders Section */}
       <ProjectFolders />
-
-      <Tabs defaultValue="manage" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="manage">จัดการโปรเจกต์</TabsTrigger>
-          <TabsTrigger value="custom">Webhook แบบกำหนดเอง</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="manage" className="space-y-6">
-          <ProjectManagement />
-        </TabsContent>
-
-        <TabsContent value="custom" className="space-y-6">
-          <WebhookForm />
-
-          {/* Information Section */}
-          <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+      <WebhookForm />
+      <ProjectManagement />
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
             <div className="space-y-4">
               <h3 className="text-base sm:text-lg font-semibold">วิธีการใช้งาน</h3>
               <ul className="space-y-2 text-xs sm:text-sm text-muted-foreground">
@@ -61,8 +48,24 @@ export default function WebhookPage() {
               </div>
             </div>
           </div>
+
+      {/* <Tabs defaultValue="manage" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+         
+          
+        </TabsList>
+
+        <TabsContent value="manage" className="space-y-6">
+          
         </TabsContent>
-      </Tabs>
+
+        <TabsContent value="custom" className="space-y-6">
+          
+          {/* Information Section */}
+          
+        {/* </TabsContent>
+      </Tabs> */} 
+
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import { id } from "date-fns/locale"
 import { supabase } from "./supabase"
 
 // Types for database tables
@@ -8,6 +9,7 @@ export interface Project {
   status: string
   created_at: string
   updated_at: string
+  id_agent: string 
 }
 
 export interface Agent {
@@ -144,7 +146,7 @@ export class DatabaseService {
   static async getProjects(): Promise<Project[]> {
     const { data, error } = await supabase
       .from("projects")
-      .select("id, name, description, created_at, updated_at")
+      .select("id, name, description, created_at, updated_at , id_agent")
       .order("updated_at", { ascending: false }) // Sort by most recently updated
 
     if (error) throw error
@@ -156,7 +158,8 @@ export class DatabaseService {
     }))
   }
 
-  static async createProject(project: Omit<Project, "id" | "created_at" | "updated_at" | "status">): Promise<Project> {
+static async createProject(
+  project: Omit<Project, "id" | "created_at" | "updated_at" | "status">): Promise<Project> {
     try {
       console.log("DatabaseService.createProject called with:", project) // Debug log
 
@@ -167,8 +170,11 @@ export class DatabaseService {
 
       const projectData = {
         name: project.name.trim(),
+        id_agent: project.id_agent.trim(),
         description: project.description?.trim() || null,
       }
+
+
 
       console.log("Inserting project data:", projectData) // Debug log
 
@@ -446,4 +452,70 @@ export class DatabaseService {
     if (error) throw error
     return data || []
   }
+
+  // Voicebot UX Report - Create a new report
+  static async createVoicebotUXReport(payload: {
+  fileName: string;
+  projectName: string;
+  agentName: string;
+  timestamp: string;
+  performanceMetrics: {
+    successRate: number;
+    errorRate: number;
+    responseTime: number;
+    accuracy: number;
+  };
+  analysisResults: {
+    totalRecords: number;
+    processedRecords: number;
+    errorRecords: number;
+    summary: string;
+  };
+  userTest: any[];      // หรือ type เฉพาะตาม data
+  testCase: any[];      // หรือ type เฉพาะตาม data
+  feedback: any[];      // หรือ type เฉพาะตาม data
+}) {
+  try {
+    const {
+      fileName,
+      projectName,
+      agentName,
+      timestamp,
+      performanceMetrics,
+      analysisResults,
+      userTest,
+      testCase,
+      feedback,
+    } = payload
+
+    const { data, error } = await this.supabase
+      .from("voicebot_ux_report")
+      .insert([{
+        file_name: fileName,
+        project_name: projectName,
+        agent_name: agentName,
+        timestamp: timestamp,
+        success_rate: performanceMetrics?.successRate ?? null,
+        error_rate: performanceMetrics?.errorRate ?? null,
+        response_time: performanceMetrics?.responseTime ?? null,
+        accuracy: performanceMetrics?.accuracy ?? null,
+        total_records: analysisResults?.totalRecords ?? null,
+        processed_records: analysisResults?.processedRecords ?? null,
+        error_records: analysisResults?.errorRecords ?? null,
+        summary: analysisResults?.summary ?? null,
+        user_test: userTest ?? [],
+        test_case: testCase ?? [],
+        feedback: feedback ?? [],
+      }])
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return data
+  } catch (error) {
+    console.error("Error in createVoicebotUXReport:", error)
+    throw error
+  }
+}
 }
