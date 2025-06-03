@@ -37,20 +37,20 @@ export async function GET() {
         try {
           // Count files for this project
           const { count: fileCount, error: countError } = await supabase
-            .from("file_uploads")
+            .from("voicebot_ux_report")
             .select("*", { count: "exact", head: true })
-            .eq("project_id", project.id)
+            .eq("project_name", project.name)
 
           if (countError) {
-            console.error(`Error counting files for project ${project.id}:`, countError)
+            console.error(`Error counting files for project ${project.name}:`, countError)
           }
 
           // Get recent files for this project
           const { data: recentFilesData, error: filesError } = await supabase
-            .from("file_uploads")
-            .select("file_name, created_at")
-            .eq("project_id", project.id)
-            .order("created_at", { ascending: false })
+            .from("voicebot_ux_report")
+            .select("file_name, timestamp")
+            .eq("project_name", project.name)
+            .order("timestamp", { ascending: false })
             .limit(5)
 
           if (filesError) {

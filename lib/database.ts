@@ -138,6 +138,7 @@ export interface ASRDetail {
   created_at: string
 }
 
+
 // Database functions
 export class DatabaseService {
   static supabase = supabase
@@ -453,17 +454,49 @@ static async createProject(
     return data || []
   }
 
-  // Voicebot UX Report - Create a new report
-  static async createVoicebotUXReport(payload: {
+  static async getFileVoiceByProject(projectName: string): Promise<{ id: number, file_name: string }[]> {
+    const { data, error } = await supabase
+      .from("voicebot_ux_report")
+      .select("id, file_name , project_name , timestamp") // <<< เลือกเฉพาะ 2 column
+      .eq("project_name", projectName)
+      
+    console.log("data:", data);
+    if (error) throw error;
+    return data || [];
+  }
+
+    static async getFileVoiceById(id: number): Promise<{ id: number }[]> {
+    const { data, error } = await supabase
+      .from("voicebot_ux_report")
+      .select("*") // <<< เลือกเฉพาะ 2 column
+      .eq("id", id)
+      .order("timestamp", { ascending: false }) // เรียงตาม timestamp ล่าสุดก่อน
+      
+    console.log("data:", data);
+    if (error) throw error;
+    return data || [];
+  }
+
+
+
+static async createVoicebotUXReport(payload: {
   fileName: string;
   projectName: string;
   agentName: string;
   timestamp: string;
   performanceMetrics: {
-    successRate: number;
-    errorRate: number;
-    responseTime: number;
-    accuracy: number;
+    successRate?: number
+    errorRate?: number
+    responseTime?: number
+    accuracy?: number
+  };
+  countDataPerfermance : {
+    count_hang_up? : number,
+    success_Hang_up? : number,
+    count_spelling_Name? : number,
+    success_Spelling_Name? : number,
+    count_Result? : number,
+    success_Result? : number,
   };
   analysisResults: {
     totalRecords: number;
@@ -471,9 +504,9 @@ static async createProject(
     errorRecords: number;
     summary: string;
   };
-  userTest: any[];      // หรือ type เฉพาะตาม data
-  testCase: any[];      // หรือ type เฉพาะตาม data
-  feedback: any[];      // หรือ type เฉพาะตาม data
+  userTest: any[];
+  testCase: any[];
+  feedback: any[];
 }) {
   try {
     const {
@@ -482,40 +515,83 @@ static async createProject(
       agentName,
       timestamp,
       performanceMetrics,
+      countDataPerfermance,
       analysisResults,
       userTest,
       testCase,
       feedback,
     } = payload
 
-    const { data, error } = await this.supabase
+    // 1. ตรวจสอบว่ามีข้อมูลอยู่หรือไม่
+    const { data: existing, error: findError } = await this.supabase
       .from("voicebot_ux_report")
-      .insert([{
-        file_name: fileName,
-        project_name: projectName,
-        agent_name: agentName,
-        timestamp: timestamp,
-        success_rate: performanceMetrics?.successRate ?? null,
-        error_rate: performanceMetrics?.errorRate ?? null,
-        response_time: performanceMetrics?.responseTime ?? null,
-        accuracy: performanceMetrics?.accuracy ?? null,
-        total_records: analysisResults?.totalRecords ?? null,
-        processed_records: analysisResults?.processedRecords ?? null,
-        error_records: analysisResults?.errorRecords ?? null,
-        summary: analysisResults?.summary ?? null,
-        user_test: userTest ?? [],
-        test_case: testCase ?? [],
-        feedback: feedback ?? [],
-      }])
-      .select()
-      .single()
+      .select("id")
+      .eq("file_name", fileName)
+      .eq("project_name", projectName)
+      .maybeSingle(); // ได้ null ถ้าไม่เจอ
 
-    if (error) throw error
+    if (findError) throw findError
 
-    return data
+    // 2. เตรียมข้อมูลที่จะอัปเดต/สร้าง
+    const newData = {
+      file_name: fileName,
+      project_name: projectName,
+      agent_name: agentName,
+      timestamp: timestamp,
+      success_rate: performanceMetrics?.successRate ?? null,
+      error_rate: performanceMetrics?.errorRate ?? null,
+      response_time: performanceMetrics?.responseTime ?? null,
+      accuracy: performanceMetrics?.accuracy ?? null,
+      total_records: analysisResults?.totalRecords ?? null,
+      processed_records: analysisResults?.processedRecords ?? null,
+      error_records: analysisResults?.errorRecords ?? null,
+      summary: analysisResults?.summary ?? null,
+      user_test: userTest ?? [],
+      test_case: testCase ?? [],
+      feedback: feedback ?? [],
+      count_hang_up: countDataPerfermance?.count_hang_up ?? null,
+      success_hang_up: countDataPerfermance?.success_Hang_up ?? null,
+      count_spelling_name: countDataPerfermance?.count_spelling_Name ?? null,
+      success_spelling_name: countDataPerfermance?.success_Spelling_Name ?? null,
+      count_result: countDataPerfermance?.count_Result ?? null,
+      success_result: countDataPerfermance?.success_Result ?? null,
+      
+    };
+
+    let result;
+    if (existing) {
+      // 3. ถ้ามีข้อมูลเดิม -> update
+      const { data: updated, error: updateError } = await this.supabase
+        .from("voicebot_ux_report")
+        .update(newData)
+        .eq("id", existing.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+      result = updated;
+    } else {
+      // 4. ถ้าไม่มีข้อมูลเดิม -> insert ใหม่
+      const { data: inserted, error: insertError } = await this.supabase
+        .from("voicebot_ux_report")
+        .insert([newData])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      result = inserted;
+    }
+
+    return result;
   } catch (error) {
     console.error("Error in createVoicebotUXReport:", error)
     throw error
   }
 }
+
+// เพิ่มใน DatabaseService class
+
+
+
 }
+

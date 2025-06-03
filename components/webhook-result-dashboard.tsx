@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, FileText, Clock, BarChart3, X, Download, RefreshCw , ChartPie } from "lucide-react"
+import { CheckCircle2, FileText, Clock, BarChart3, X, Download, RefreshCw , ChartPie ,Loader2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { exportToPDF } from "@/lib/pdf-export"
 import { PieChart , pieArcLabelClasses   } from '@mui/x-charts/PieChart';
@@ -15,6 +15,11 @@ import { ChartsXAxis } from '@mui/x-charts/ChartsXAxis';
 import { ChartsYAxis } from '@mui/x-charts/ChartsYAxis';
 import { useAnimate } from '@mui/x-charts/hooks';
 import { DefaultizedPieValueType } from '@mui/x-charts/models';
+import { set } from "date-fns"
+import { se } from "date-fns/locale"
+
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 interface WebhookResponseData {
   // Basic info
   fileName: string
@@ -24,10 +29,25 @@ interface WebhookResponseData {
 
   // Performance metrics (similar to dashboard)
   performanceMetrics?: {
+    count_hang_up? : number,
+    success_Hang_up? : number,
+    count_spelling_Name? : number,
+    success_Spelling_Name? : number,
+    count_Result? : number,
+    success_Result? : number,
     successRate?: number
     errorRate?: number
     responseTime?: number
     accuracy?: number
+  }
+
+  countDataPerfermance : {
+    count_hang_up? : number,
+    success_Hang_up? : number,
+    count_spelling_Name? : number,
+    success_Spelling_Name? : number,
+    count_Result? : number,
+    success_Result? : number,
   }
 
   // Analysis results
@@ -81,9 +101,69 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
   const [isVisible, setIsVisible] = useState(false)
   const [totalCase, setTotalCase] = useState(0)
 
-
+  
+  const [isLoading, setLoding] = useState(false)
   const TOTAL = data.userTest?.map((item) => item.value).reduce((a, b) => a + b, 0);
 
+
+  const [allHungUp, setAllHangUp] = useState(0)
+  const [allSpellingName, setAllSpellingName] = useState(0)
+  const [allResult, setAllResult] = useState(0)
+
+  const [unsuccessfulHungUp, setAllnsuccessfulHungUp] = useState(0)
+  const [unsuccessfulSpellingName, setAllnsuccessfulSpellingName] = useState(0)
+  const [unsuccessfulResult, setAllnsuccessfulResult] = useState(0)
+
+  const calAllData = () => {
+    
+    setAllnsuccessfulHungUp(Math.abs(data.countDataPerfermance.count_hang_up - data.countDataPerfermance.success_Hang_up))
+    setAllnsuccessfulSpellingName(Math.abs(data.countDataPerfermance.count_spelling_Name - data.countDataPerfermance.success_Spelling_Name))
+    setAllnsuccessfulResult(Math.abs(data.countDataPerfermance.count_Result - data.countDataPerfermance.success_Result))
+  }
+  useEffect(() => {
+    calAllData()
+  }, [])
+
+  const exportMultiIdToPDF = async (ids) => {
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'px',
+      format: "a4"
+    });
+    let isFirstPage = true;
+  
+    for (const id of ids) {
+      const element = document.getElementById(id);
+      if (!element) continue;
+      // สั่ง capture ทีละ id
+      // scale: 2 เพื่อความคมชัด (ปรับได้)
+      const canvas = await html2canvas(element, { useCORS: true, scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+  
+      // set ขนาด pdf/page
+      const pdfWidth = 440;
+      const pdfHeight = 800;
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  
+      if (!isFirstPage) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      isFirstPage = false;
+    }
+    pdf.save("multi-section-export.pdf");
+
+    setLoding(false);
+  }
+  
+  // วิธีใช้งาน เช่น
+  const handleExportAllSections = () => {
+    setLoding(true);
+    exportMultiIdToPDF(['pdf-content-1' , 'pdf-content-2']);
+    
+  };
+
+
+  
   const getArcLabel = (params: DefaultizedPieValueType) => {
     const percent = params.value / TOTAL;
     return `${(percent * 100).toFixed(0)}%`;
@@ -150,13 +230,13 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
   }, [data.testCase])
 
   
-  
-  
 
   // Calculate overall success rate
   const calculateSuccessRate = () => {
-    if (data.analysisResults?.totalRecords && data.analysisResults?.processedRecords) {
-      return Math.round((data.analysisResults.processedRecords / data.analysisResults.totalRecords) * 100)
+    if (data.performanceMetrics?.accuracy && data.performanceMetrics?.successRate && data.performanceMetrics?.errorRate && data.performanceMetrics?.responseTime) {
+       const result = Math.round((data.performanceMetrics.accuracy + data.performanceMetrics.successRate + data.performanceMetrics?.errorRate +data.performanceMetrics?.responseTime) / 4)
+      
+      return result
     }
     return data.performanceMetrics?.successRate || 0
   }
@@ -196,7 +276,7 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
       className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${isVisible ? "opacity-100" : "opacity-0"}`}
     >
       <div
-        className={`bg-background bg-cyan-900 opacity-95 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto transition-transform duration-300 ${isVisible ? "scale-100" : "scale-95"}`}
+        className={`bg-background bg-[#F7F7F7] opacity-95 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto transition-transform duration-300 ${isVisible ? "scale-100" : "scale-95"}`}
       >
         {/* Header */}
         <div className=" top-0 bg-background border-b p-6 flex items-center justify-between">
@@ -209,9 +289,19 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
           </div>
           <div className="flex items-center gap-2">
             {onDownloadReport && (
-              <Button variant="outline" size="sm" onClick={onDownloadReport}>
-                <Download className="h-4 w-4 mr-2" />
-                ดาวน์โหลดรายงาน
+              <Button variant="outline" size="sm" onClick={handleExportAllSections}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    กำลังประมวลผล...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    ดาวน์โหลดรายงาน
+                  </>
+                )}
+                
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={handleClose}>
@@ -230,15 +320,16 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
           </Alert>
 
           {/* Basic Information */}
+          <div id="pdf-content-1">
           <div className="grid gap-4 md:grid-cols-3 ">
-            <Card className="bg-cyan-900">
+            <Card className="">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2 text-[#222831]">
                   <FileText className="h-4 w-4" />
                   ข้อมูลไฟล์
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-2 text-[#222831]">
                 <div>
                   <p className="text-xs text-muted-foreground">ชื่อไฟล์</p>
                   <p className="font-medium">{data.fileName}</p>
@@ -254,7 +345,7 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
               </CardContent>
             </Card>
 
-            <Card className="bg-cyan-900">
+            <Card className="">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Clock className="h-4 w-4" />
@@ -275,17 +366,17 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
               </CardContent>
             </Card>
 
-            <Card className="bg-cyan-900">
+            <Card className=" grid grid-cols-1 content-center"> 
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <CardTitle className="text-sm font-medium flex items-start gap-2 justify-center">
                   <BarChart3 className="h-4 w-4" />
                   ผลลัพธ์รวม
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="text-center">
+              <CardContent className="space-y-2 align-middleflex">
+                <div className="text-center "> 
                   <div className="text-3xl font-bold text-green-600">{calculateSuccessRate()}%</div>
-                  <p className="text-xs text-muted-foreground">อัตราความสำเร็จ</p>
+                  <p className="text-xs text-muted-foreground">อัตราความสำเร็จผลเทส</p>
                 </div>
               </CardContent>
             </Card>
@@ -294,9 +385,9 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
 
           <div className="grid gap-4 md:grid-cols-3 ">
             { data.userTest &&(
-            <Card className="text-white bg-cyan-900">
+            <Card className="text-white ">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2 text-[#222831]">
                   <ChartPie className="h-4 w-4" />
                   Tester
                 </CardTitle>
@@ -344,7 +435,7 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
 
 
             {data.performanceMetrics && (
-            <Card className="bg-cyan-900 col-span-2">
+            <Card className=" col-span-2">
               <CardHeader>
                 <CardTitle>ตัวชี้วัดประสิทธิภาพ</CardTitle>
                 <CardDescription>ผลการประเมินประสิทธิภาพการประมวลผล</CardDescription>
@@ -362,15 +453,15 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
                         <div>
                           
                           <div className="mt-4 grid gap-2 md:grid-cols-2">
-                            <div className=" text-sm text-gray-300">จำนวนข้อมูลทั้งหมด</div>
-                            <div className=" text-sm text-right">100</div>
+                            <div className=" text-sm text-[#222831]">จำนวนข้อมูลทั้งหมด</div>
+                            <div className=" text-sm text-right">{data.countDataPerfermance.count_hang_up}</div>
                           </div>
                           <div className="mt-1 grid gap-5 md:grid-cols-2">
                             <div className="text-xs text-green-500">
-                              สำเร็จ 60
+                              {data.countDataPerfermance.success_Hang_up || 0} สำเร็จ
                             </div>
                             <div className="text-xs text-red-500 text-right">
-                              ไม่สำเร็จ 40
+                              {unsuccessfulHungUp || 0} ไม่สำเร็จ
                             </div>
                           </div>
                         </div>
@@ -390,15 +481,15 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
                       <div>
                           
                           <div className="mt-4 grid gap-2 md:grid-cols-2">
-                            <div className=" text-sm text-gray-300">จำนวนข้อมูลทั้งหมด</div>
-                            <div className=" text-sm text-right">100</div>
+                            <div className=" text-sm text-[#222831]">จำนวนข้อมูลทั้งหมด</div>
+                            <div className=" text-sm text-right">{data.countDataPerfermance.count_spelling_Name}</div>
                           </div>
                           <div className="mt-1 grid gap-5 md:grid-cols-2">
                             <div className="text-xs text-green-500">
-                              สำเร็จ 60
+                              {data.countDataPerfermance.success_Spelling_Name || 0} สำเร็จ
                             </div>
                             <div className="text-xs text-red-500 text-right">
-                              ไม่สำเร็จ 40
+                              {unsuccessfulSpellingName || 0 } ไม่สำเร็จ
                             </div>
                           </div>
                         </div>
@@ -416,15 +507,15 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
                       <div>
                           
                           <div className="mt-4 grid gap-2 md:grid-cols-2">
-                            <div className=" text-sm text-gray-300">จำนวนข้อมูลทั้งหมด</div>
-                            <div className=" text-sm text-right">100</div>
+                            <div className=" text-sm text-[#222831]">จำนวนข้อมูลทั้งหมด</div>
+                            <div className=" text-sm text-right">{data.countDataPerfermance.count_Result}</div>
                           </div>
                           <div className="mt-1 grid gap-5 md:grid-cols-2">
                             <div className="text-xs text-green-500">
-                              สำเร็จ 60
+                              {data.countDataPerfermance.success_Result || 0} สำเร็จ
                             </div>
                             <div className="text-xs text-red-500 text-right">
-                              ไม่สำเร็จ 40
+                              {unsuccessfulResult || 0} ไม่สำเร็จ
                             </div>
                           </div>
                         </div>
@@ -448,7 +539,7 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
 
 
            { data.testCase && (
-          <Card className="bg-cyan-900">
+          <Card className="">
                 <CardHeader>
                   <CardTitle>Test case</CardTitle>
                   <CardDescription>สรุปผล Test Case </CardDescription>
@@ -492,12 +583,13 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
                 </CardContent>
               </Card>
               )}
-          
+               </div>
+          <div id="pdf-content-2">
           {/* Detected Issues */}
           {/* Analysis Results */}
           {data.analysisResults && (
             
-              <Card className="bg-cyan-900">
+              <Card className="">
                 <CardHeader>
                   <CardTitle>ผลการวิเคราะห์ข้อมูล</CardTitle>
                   <CardDescription>สรุปผลการประมวลผลข้อมูล CSV</CardDescription>
@@ -533,12 +625,15 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
                   )}
                 </CardContent>
               </Card>
+              
 
               
               
             
           )}
-        <Card className="bg-cyan-900">
+         
+        
+        <Card className="">
                 <CardHeader>
                   <CardTitle>Feedback Summary</CardTitle>
                   <CardDescription>สรุป Feedback ที่ได้รับ</CardDescription>
@@ -555,7 +650,7 @@ export function WebhookResultDashboard({ data, onClose, onDownloadReport }: Webh
                   ))}
                 </CardContent>
               </Card>
-
+              </div>
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button variant="outline" onClick={handleClose}>

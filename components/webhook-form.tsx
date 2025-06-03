@@ -19,6 +19,9 @@ import { WebhookResultDashboardChatbot } from "./webhook-result-dashboard_Chatbo
 import { parseWebhookResponse } from "@/lib/webhook-response-parser"
 import { set } from "date-fns"
 import { DatabaseService } from "@/lib/database"
+import Image from 'next/image'
+import logo from "@/public/logo.png"
+
 
 interface Project {
   id: string
@@ -53,18 +56,24 @@ export function WebhookForm() {
   const [projects, setProjects] = useState<Project[]>([])
   const [agents, setAgents] = useState<Agent[]>([])
   const [loadingData, setLoadingData] = useState(true)
+  // const [file, setFile] = useState<File | null>(null);
+    
+  const handleFileSelect = (selectedFile: File) => {
+    setFile(selectedFile);
+  };
+
   useEffect(() => {
     projects.map((project) => {
       if (projectId === project.id) {
         setAgentId(project.id_agent)
         if (project.id_agent == "2219b7e3-e35a-4208-a3a7-c5e46f7834e7") {
         setChatbotResult(true)
-        setWebhookUrl("https://5e71-184-22-39-189.ngrok-free.app/webhook-test/afadbbfe-b8f5-4cf2-9a28-614d7c039dce")
+        setWebhookUrl("https://ba35-184-22-39-189.ngrok-free.app/webhook/ab1b6138-5ee7-4aac-8522-39b5f1f3456e")
         setvoiceResult(false)
                           
     }else if (project.id_agent == "d627e8b8-a499-4c85-899a-26316f751e00") {
         setvoiceResult(true)
-        setWebhookUrl("https://5e71-184-22-39-189.ngrok-free.app/webhook-test/ab1b6138-5ee7-4aac-8522-39b5f1f3456e")
+        setWebhookUrl("https://ba35-184-22-39-189.ngrok-free.app/webhook/ab1b6138-5ee7-4aac-8522-39b5f1f3456e")
         setChatbotResult(false)
     }
     }
@@ -72,7 +81,6 @@ export function WebhookForm() {
 
     
   })
-   
   }, [projectId])
   
   
@@ -169,6 +177,7 @@ export function WebhookForm() {
 //   }, [])
 
 
+ 
 
   const handleProjectCreated = () => {
     fetchData() // Refresh data
@@ -345,13 +354,15 @@ export function WebhookForm() {
 
   return (
     <div>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5" />
-            ส่ง CSV ไปยัง Webhook
+      <Card className="border-0">
+        <CardHeader className=" text-center justify-center">
+          <CardTitle className="flex items-center  text-center justify-center text-4xl gap-2">
+            ส่งไฟล์ Test ไปยัง <br />Automation Workflow
+            
+            <Send className="h-10 w-10 rotate-12" />
           </CardTitle>
-          <CardDescription>อัปโหลดไฟล์ CSV และส่งไปยัง webhook พร้อมข้อมูลเมตา</CardDescription>
+          <CardDescription className=" justify-items-center">อัปโหลดไฟล์ CSV และส่งไปยัง webhook พร้อมข้อมูลเมตา <br /> <Image className="mt-6" src={logo} width={150} height={150} alt="Logo"/></CardDescription>
+          
         </CardHeader>
         <CardContent>
           {/* Status Messages */}
@@ -369,10 +380,10 @@ export function WebhookForm() {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6 ">
+          <form onSubmit={handleSubmit} className="space-y-6 mt-12 ">
 
             {/* Project Selection */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 ">
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="project-name">ชื่อโปรเจกต์</Label>
                 <div className="flex gap-2">
@@ -438,7 +449,11 @@ export function WebhookForm() {
             </div>
             
 
-            {/* File Upload Section */}
+           
+            
+              
+            
+
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className={`space-y-2 ${hidden} col-span-2 `} >
               <Label htmlFor="file-upload">ไฟล์ CSV</Label>
@@ -503,17 +518,17 @@ export function WebhookForm() {
             
 
             {/* Submit Button */}
-            <div className="flex justify-end pt-4">
+            <div className={`flex justify-end pt-4 ${hidden} col-span-1 transition-all`} >
               <Button type="submit" disabled={isLoading || !file || loadingData} className="min-w-[160px]">
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    กำลังส่ง...
+                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    กำลังประมวลผล...
                   </>
                 ) : (
                   <>
-                    <Send className="mr-2 h-4 w-4" />
-                    ส่งไปยัง Webhook
+                    <Send className="mr-2 h-3 w-3" />
+                    ส่งข้อมูล
                   </>
                 )}
               </Button>

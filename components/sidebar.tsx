@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { ThemeToggleSimple } from "@/components/theme-toggle-simple"
 import { Menu, Send, Mic, Bot, ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { disableGlobalCursorStyles } from "react-resizable-panels"
 
 const navigation = [
   {
@@ -17,18 +18,20 @@ const navigation = [
     icon: Send,
     description: "ส่ง Webhook แบบกำหนดเอง",
   },
+    {
+    name: "Call Test",
+    href: "/analytics",
+    icon: Mic,
+    description: "แดชบอร์ด Call Test",
+  },
   {
     name: "Chatbot",
     href: "/chatbot",
     icon: Bot,
-    description: "แดชบอร์ด Chatbot",
+    description: "กำลังพัฒนา ...",
+    className: "pointer-events-none opacity-50 cursor-not-allowed",
   },
-  {
-    name: "VoiceBot",
-    href: "/analytics",
-    icon: Mic,
-    description: "แดชบอร์ด VoiceBot",
-  },
+
 ]
 
 interface SidebarProps {
@@ -46,13 +49,13 @@ export function Sidebar({ className }: SidebarProps) {
         {!isCollapsed && (
           <Link href="/webhook" className="flex items-center space-x-2">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">CSV</span>
+              <span className="text-primary-foreground font-bold text-sm">DFT</span>
             </div>
-            <span className="font-bold text-sm">แดชบอร์ด CSV</span>
+            <span className="font-bold text-sm">Dashboard for tester</span>
           </Link>
         )}
 
-        <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)} className="h-8 w-8">
+        <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)}  className="h-8 w-8">
           {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
       </div>
@@ -64,7 +67,7 @@ export function Sidebar({ className }: SidebarProps) {
           const isActive = pathname === item.href
 
           return (
-            <Link key={item.href} href={item.href}>
+            <Link key={item.href} href={item.href} className={item.className}   >
               <div
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",

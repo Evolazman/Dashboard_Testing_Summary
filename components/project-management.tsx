@@ -235,8 +235,8 @@ export function ProjectManagement() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={project.status === "active" ? "default" : "secondary"}>
+                      <TableCell className="text-center">
+                        <Badge  variant={project.status === "active" ? "default" : "secondary"}>
                           {project.status === "active" ? "ใช้งาน" : "ไม่ใช้งาน"}
                         </Badge>
                       </TableCell>

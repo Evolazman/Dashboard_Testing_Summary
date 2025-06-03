@@ -11,9 +11,9 @@ export function TopBar() {
           <MobileSidebar />
           <div className="flex items-center space-x-2">
             <div className="h-6 w-6 rounded bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">CSV</span>
+              <span className="text-primary-foreground font-bold text-xs">Botnoi</span>
             </div>
-            <span className="font-bold text-sm">แดชบอร์ด CSV</span>
+            <span className="font-bold text-sm">Dashboard for Tester</span>
           </div>
         </div>
 
